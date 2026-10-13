@@ -168,3 +168,21 @@ Availability Confidence are overdue or at risk; verify current status.
   already known to leadership and engineering, so don't present it as news.
 - Nothing here is verified against data yet. Anything marked hypothesis stays that way
   until Ravi's numbers say otherwise.
+
+### Learned in session 2 (13 Oct)
+- `support_tickets` (rook-database, 147 rows, 29 Jun to 7 Sep) is filed by **handlers** (12 filers),
+  never responders, though some quote a responder. Wording is partly templated (same text across
+  handlers), so counts show ticket volume, not distinct incidents.
+- Since 12 Aug: about 4 tickets a day vs about 0.9 before. 15 "gone before they could answer" and 30
+  "quiet" tickets, none before 12 Aug (first on 12 Aug and 17 Aug); 4 silent filter resets. Dark mode,
+  badge size, alert sounds, tag legend, requisition delays, failure-report silence and catalog search
+  all predate 4.2. All 45 lost/quiet tickets are still open.
+- Quiet then lost is rare: only tickets 3110 and 3140 say both; Farlight, Halfmoon and The Undertow
+  appear in both groups. Interviews undersell how bad quiet gets (tickets: 3 to 9 days of nothing).
+- Interviews vs tickets: they agree on onset and on lost/quiet. Halloran's Supply complaints were loud
+  but are only 4/2/2 tickets; tickets show console friction no interviewee raised. Ambrose's interview
+  ("two weeks ago") and ticket 3043 (13 Aug) look like the same coat-and-one-boot scene but the dates differ.
+- Supply: 26 tickets, 13 issues each filed twice. Marathon-day maintenance bookings (3054, 3109)
+  contradict Halloran's "smarter scheduling"; no evidence yet that quiet responders are booked as "free".
+- Untested idea: the routing pool is zero-sum, so one change makes some responders quiet and others
+  (e.g. The Gale) busy; handlers of busy responders don't file tickets. Ravi's data is still the test.
