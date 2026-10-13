@@ -24,6 +24,16 @@ prompt library built from your own questions.
 
 ### 1.
 
+Why did you choose the information that you did as being important enough to add to the .md file?
+
 ### 2.
 
+What's contradictory or missing across the wiki pages, the handover note, and the rest of this folder?
+
 ### 3.
+
+I seem to be missing some context about the interviews and who Kip, the quiet one, and Aunt Dot are and what the conversation about "seasonal" was about. What was 'seasonal' in reference to?
+
+### 4.
+
+update the where things stand section based on your findings above

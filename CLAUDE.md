@@ -24,4 +24,147 @@ teaching scenario.
 
 ## Working context
 
-_You'll fill this in during Module 1._
+Sources: rook-wiki (About Rook, Glossary, Team directory, Releases, Q3 roadmap,
+product briefs, Dispatch one-pager, 4.2 page comments) and Priya's handover doc
+(00-rook/company/notes/handoff-from-priya.docx). Wiki is the record; re-read it
+before relying on anything below. Today is 2026-10-13.
+
+### My job
+I'm the new PM for **Rook Dispatch** (started Mon 24 Aug 2026), reporting to
+Helen Achebe. I inherited it from Priya, who left 21 Aug with no overlap.
+
+### Company and products
+Rook Industries (founded 2014, HQ Site Aleph, 241 staff) sells subscription
+software (priced per active responder) to masked, independent **responders** and
+the **handlers** and **quartermasters** who support them. Monthly release train;
+point releases are 4.x.
+- **Rook Dispatch** (mine): responder coordination. Handlers use a web console;
+  responders use a phone app. Flow: incident enters console, Dispatch ranks
+  available responders (routing priority), pings the top one, they take it or
+  turn it down; a turned-down or missed ping moves to the next. Routing config
+  ships with the release, not as a runtime setting.
+- **Rook Supply**: gear requisitions, maintenance, failure reports. Handlers and
+  quartermasters. Reads Dispatch's Responder Availability Record.
+- **Hard rule:** Rook never stores or can reconstruct responder cover-to-legal
+  identity (Security Policy 4.1). Never design for it or try to work out who anyone is.
+
+### People (4.2 comments use roles, not names)
+| Role in comments | Person | Notes |
+| --- | --- | --- |
+| Engineering manager | Marcus Oyelaran, Site Aleph | Runs Dispatch eng; Priya's "start here" |
+| Staff engineer | Wen Li, Berlin | Built the who-gets-pinged logic; no written doc exists. Back from leave 24 Aug |
+| Product designer | Sofia Marino, Site Aleph | Console and phone app; ran the September interviews |
+| Support lead | Nadia Hoffmann, Berlin | Owns the tickets; hears handler complaints first |
+| Director of Product | Helen Achebe, Site Aleph | My boss; owns roadmap and commitments |
+| Data analyst | Ravi Menon, Singapore | Owns the weekly numbers on ping-taking. Not mentioned in 4.2 thread |
+| Priya | Priya Raghunathan | Former Dispatch PM, gone 21 Aug |
+Note: Priya's handover says to ask the engineering manager for numbers; Ravi
+actually owns the weekly acceptance reporting. Go to Ravi.
+
+### Vocabulary
+- **Callout**: request for a responder at an incident. **Ping**: one callout offered
+  to one responder's phone. **Taken / Turned down / Missed** (no answer in time);
+  turned down and missed both move the ping on but are recorded separately.
+- **Ping wait**: seconds before a ping counts as missed. Same for everyone.
+- **Acceptance rate**: pings taken / all pings. Headline metric. Also
+  **time-to-accept** (median seconds ping to taken) and **coverage gap** (no
+  available responder had the required capability tags; different from low acceptance).
+- **Routing priority**: score ranking responders: proximity (travel-time), availability,
+  capability match, recent acceptance history. Turning down or missing pings lowers
+  the acceptance component and so future rank.
+- **Capability tags**: flight, structural-entry, hazmat-tolerant, cold-weather, aquatic,
+  crowd-management, de-escalation. **Mutual aid**: cross-area cover, unsupported, Q4 list.
+- Supply: **requisition**, **field failure report**, **service interval**.
+
+### Release history
+- **4.0** (7 Apr): new console nav, responder profile redesign, routing-override audit log.
+- **4.1** (16 Jun): proximity uses travel-time estimate; bulk callout; push reliability.
+- **4.2** (12 Aug): proximity weighted up vs acceptance history; **ping wait 90s to 60s**;
+  console filters persist; three defect fixes.
+
+### Where things stand: the 4.2 problem
+- Since 4.2, callout tickets ~3x normal (Nadia, 18 Aug), still elevated 26 Aug, a handler
+  emailed her directly. Split about 2/3 "phone never goes off" and 1/3 "gone before I
+  could answer". Nadia can explain the second (60s wait) but not the first.
+- Marcus asked 14 Aug whether the new weighting was meant to apply to responders who
+  turn jobs down too. Wen never answered (away, then buried). **The code answers it:**
+  nothing in config.py/history.py distinguishes them, so it fell out that way. Weights
+  went proximity 0.45 to 0.60, recent acceptance 0.40 to 0.25.
+- **Likely mechanism (my reading of 00-rook/code/dispatch-routing, not yet tested on data):**
+  history.py treats *missed* the same as *turned down* (-0.12; an accept is only +0.08;
+  glossary says they're recorded separately, the score doesn't). Scores never decay
+  (2019 TODO, never done). So someone who slips down the order gets fewer pings, fewer
+  chances to recover, and the 60s wait makes misses likelier. Fits Kip's pair: Meteor
+  Mite silent, The Gale nonstop, same city, same week.
+- **"Seasonal" claim:** Priya (19 Aug, handover) and Marcus (26 Aug) said August is
+  always soft and it would settle in September. No prior-year or weekly data was shown.
+  It can't explain "gone before I could answer" (the 60s wait does), and a quieter month
+  shouldn't lower acceptance rate (a share). The 2-5 Sep interviews (Aunt Dot, Ambrose,
+  Halloran, Kip) describe both patterns continuing into September. Treat as unproven.
+- Priya also said don't revert 4.2 (three-quarter-old ask from wide-area responders). A
+  fix to the *scoring* (decay, miss vs decline) is not a revert, but is not decided.
+- **Helen's note (05-super-speed/director-request.txt):** she says the team traced the
+  quiet-responder problem into the routing code, a small fix is available, and she wants
+  a one-pager (ideally clickable) on what handlers and quiet responders would *experience*
+  before anyone touches code. Helen, Marcus and Wen's TODO all appear to know already;
+  the wiki thread doesn't. Marcus's "regroup after a week" (28 Aug) has no record.
+- Still needed before concluding: Ravi's weekly acceptance data (maybe rook-database),
+  split by responders who turn down/miss vs not, and before/after each 4.2 change.
+- Supply risk, unconfirmed: Supply books maintenance into low-callout windows from the
+  Availability Record. Starved responders could look "free". Tell Supply before changing
+  that record's shape (availability.py).
+
+### Roadmap (Q3 table, last reviewed 30 Jun, all owned by Priya, stale)
+| Item | Target | Status | Reality |
+| --- | --- | --- | --- |
+| Change to who gets pinged | 4.2 | Committed | Shipped |
+| Ping timeout tuning | 4.2 | Committed | Shipped as 90s to 60s |
+| Availability Confidence | 4.2 | Committed | **Not in 4.2 notes; apparently slipped** |
+| Requisition approval chains | 4.3 | Committed | Supply; brief is bloated |
+| Handler phone app | Q4 | Exploring | Sofia exploring |
+| Shared cover between responders | Q4 | Exploring | No brief |
+Priya flagged that squeezed-out items need a conversation with Helen on which are
+still Q3 commitments. **That conversation hasn't happened.** Do it early; committed
+items are changed through Product, not directly. Q3 ended 30 Sep, so 4.3 and
+Availability Confidence are overdue or at risk; verify current status.
+
+### Briefs (all stale; check before trusting)
+- **Bulk Callout** (Jan): says unowned, but bulk callout shipped in 4.1.
+- **Routing Override Audit Log** (Mar): "ready to build", but it shipped in 4.0.
+- **Requisition Approval Chains** (Jul, Supply): real ask is a second approval over
+  $2,000; the brief then piles on bypass-after-48h, a cross-site dashboard, handler
+  status view, spreadsheet replacement. Phasing TBD; scope needs cutting.
+- **Handler Phone App** (8 Sep, Sofia): push notifications, status view, one-tap contact;
+  prompted by Aunt Dot's interview, but her real pain is her responder losing the race
+  to the ping, which a handler app doesn't fix. No baseline. Not staffed. Brief and
+  roadmap name different owners.
+- Requisition brief vs Halloran's interview: he wants *faster* (11 days for a cracked
+  plate, one queue, priority field ignored), the brief adds a second sign-off.
+- Interviews (Sofia, 2-5 Sep, console redesign research, 4 handlers): Aunt Dot (Vesper),
+  Mr. Ambrose (Captain Vantage), Kip (Meteor Mite and The Gale), Halloran (Sgt. Bulwark,
+  also runs the gear cage). Other asks: bigger text, dark mode (Kip), per-responder
+  alert sounds, filter-reset warning.
+- 06-sidekicks/scheduled-run-output.txt (13 Oct) flags all 4 briefs but reads a
+  briefs/ folder not in this repo and misses that two already shipped.
+
+### Other open items
+- Priya asked me to **write down how who-gets-pinged works**. Wen is the source.
+- Filter persistence: Priya called it noise, but Ambrose says it silently reset twice.
+  Small reliability bug, not nothing.
+- "Shared cover between responders" has no brief and is ambiguous (cover identity vs
+  mutual aid); check against the confidentiality rule before scoping.
+- Supply isn't in the Team directory; Supply PM/owner unknown.
+- Priya's first-month advice: use the fresh-eyes window to question unexamined decisions.
+
+### Learned in session 1 (13 Oct)
+- Interviewees are **handlers**; "quiet" or "fast-vanishing" describes their *responders*
+  (e.g. Kip is a handler; Meteor Mite is the quiet responder).
+- The routing code lives in `00-rook/code/dispatch-routing/` (tuning values in config.py;
+  its header says tell the engineering manager before changing anything there).
+  Routing order, not eligibility: everyone available is on the list.
+- Where to look: wiki search matches titles only (read pages for text and comments);
+  wiki items, roadmap and briefs lag reality, so cross-check against release notes and code.
+- Helen's open ask is in `05-super-speed/director-request.txt`; the 4.2 diagnosis is
+  already known to leadership and engineering, so don't present it as news.
+- Nothing here is verified against data yet. Anything marked hypothesis stays that way
+  until Ravi's numbers say otherwise.
