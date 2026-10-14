@@ -186,3 +186,10 @@ Availability Confidence are overdue or at risk; verify current status.
   contradict Halloran's "smarter scheduling"; no evidence yet that quiet responders are booked as "free".
 - Untested idea: the routing pool is zero-sum, so one change makes some responders quiet and others
   (e.g. The Gale) busy; handlers of busy responders don't file tickets. Ravi's data is still the test.
+
+### Learned in session 3 (14 Oct) — pings data
+- `pings` (rook-database, 1,696 rows, 29 Jun to 6 Sep) has only callout, responder, sent_at, outcome: no response time, rank score, or capability tags (not in `callouts` or `responders` either). Missed pings went from 2.3% to 18% of pings on 12 Aug (7 on 12 Aug, 12 on 13 Aug); turn-downs stayed about 20%. Gap after a miss is about 60s.
+- Four responders went quiet: Vesper, Farlight, The Undertow, Meteor Mite (about 49 pings a week combined to 3 by week of 31 Aug; 59% of their pings missed vs about 14% for the other 12). The other 12 got more pings (123 to 162 a week). Halfmoon and Corporal Ashgrove are drifting the same way and have quiet tickets.
+- Vesper (Old Town) took 70 of 72 Old Town callouts before 4.2 and 5 of 38 after, last accept 17 Aug; Captain Vantage, Nightwell and The Longcast took over. Old Town coverage held (2 unanswered both periods), so the cost is to Vesper, not the area. Only Eastgate has two responders (Meteor Mite quiet, The Gale busy).
+- Tickets vs pings: lost tickets start on release day (12 Aug); quiet tickets lag about 5 days, peak week of 24 Aug. Lost tickets fade while misses stay high, so tickets understate. No lost/quiet tickets found for Vesper or Meteor Mite. Interviews, tickets and pings agree on direction and order (miss first, then quiet); none shows the 60s wait or rank decay directly.
+- Callouts with no taken ping: 5.5% to 11.1% (48 before, 49 after), mostly one-ping chains that just stop; why is unknown. Callout count also fell (about 140 to 120 a week) after 4.2, unexplained. Open asks: Ravi for time-to-accept and rank history; Wen/Marcus on why chains stop; capability tags to test callout needs.
