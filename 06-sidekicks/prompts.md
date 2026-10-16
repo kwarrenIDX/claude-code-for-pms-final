@@ -15,6 +15,16 @@ prompt library built from your own questions.
 
 ### 1.
 
+is there anything else you think I should add to this skill check list?
+
 ### 2.
 
+lets run the new skill on https://github.com/kwarrenIDX/claude-code-for-pms-final/blob/main/05-super-speed/brief.md
+
 ### 3.
+
+lets run the new sill on this brief https://github.com/brenteveleth/claude-code-for-pms-final/blob/main/05-super-speed/brief.md
+
+### 4.
+
+Schedule review-checklist to run every Monday morning, and let me know what it finds. Nothing needs to be ready for it to fire today. I'm setting the habit, not waiting on the result.
