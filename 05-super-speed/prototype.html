@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rook Dispatch console: coverage cards (prototype)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #14181f; --panel: #1c222c; --panel2: #232b37; --line: #323c4b;
+    --text: #e8ecf2; --muted: #9aa6b8; --taken: #3fb27f; --down: #e0a63b;
+    --missed: #e5604d; --accent: #5b9cf5; --flag: #e0a63b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+  .proto-banner { background: #2b2410; color: #f1d98a; padding: 8px 20px; font-size: 13px; border-bottom: 1px solid #4a3c14; }
+  header { display: flex; align-items: center; gap: 24px; padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .brand { font-weight: 700; letter-spacing: .3px; }
+  .brand span { color: var(--muted); font-weight: 400; }
+  nav { display: flex; gap: 18px; color: var(--muted); font-size: 14px; }
+  nav .on { color: var(--text); border-bottom: 2px solid var(--accent); padding-bottom: 12px; margin-bottom: -15px; }
+  .spacer { flex: 1; }
+  .who { color: var(--muted); font-size: 14px; }
+  .who select { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: inherit; }
+  main { max-width: 1040px; margin: 0 auto; padding: 22px 20px 60px; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 18px; }
+  h1 { font-size: 20px; margin: 0; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { background: var(--panel); color: var(--muted); border: 0; padding: 8px 14px; font: inherit; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .note { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card.quiet { border-color: var(--flag); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .name { font-size: 18px; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .pill { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--panel2); color: var(--muted); border: 1px solid var(--line); }
+  .pill.flag { background: #3a2f12; color: var(--flag); border-color: #6b551a; font-weight: 600; }
+  .pill.ok { color: var(--taken); }
+  .btn:disabled { opacity: .4; cursor: default; } .btn:disabled:hover { border-color: var(--line); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 6px; }
+  .stat { background: var(--panel2); border-radius: 8px; padding: 10px 12px; }
+  .stat-missed { background: rgba(229, 96, 77, 0.22); border: 1px solid rgba(229, 96, 77, 0.55); }
+  .stat-missed b { color: #ff8f7e; }
+  .stat-clear { background: rgba(63, 178, 127, 0.22); border: 1px solid rgba(63, 178, 127, 0.55); }
+  .stat-clear b { color: #7fe0b0; }
+  .stat b { display: block; font-size: 20px; }
+  .stat span { color: var(--muted); font-size: 12px; }
+  .breakdown { margin-top: 16px; }
+  .breakdown h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .row { display: grid; grid-template-columns: 96px 1fr 28px; align-items: center; gap: 10px; margin: 6px 0; font-size: 14px; }
+  .bar { height: 10px; border-radius: 5px; background: var(--panel2); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 5px; transition: width .35s ease; }
+  .taken i { background: var(--taken); } .down i { background: var(--down); } .missed i { background: var(--missed); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .compare { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  .banner { margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: #2d2610; border: 1px solid #5a4817; font-size: 14px; }
+  .banner b { color: var(--flag); }
+  .link { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
+  .rank { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; font-size: 13.5px; }
+  .rank-title { color: var(--muted); margin-right: 4px; }
+  .rank-step { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .rank-step.now { background: #3a2f12; border-color: #6b551a; color: var(--flag); font-weight: 600; }
+  .rank-step.now.normal { background: rgba(63, 178, 127, 0.22); border-color: rgba(63, 178, 127, 0.55); color: #7fe0b0; }
+  .why { margin-top: 10px; padding: 12px 14px; border-radius: 8px; background: var(--panel2); font-size: 14px; display: none; }
+  .why.open { display: block; }
+  .why ul { margin: 6px 0 0; padding-left: 18px; }
+  .empty { margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: var(--panel2); color: var(--muted); font-size: 14px; }
+  .foot { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .btn { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 13.5px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--muted); margin-top: 18px; }
+  .legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .legend .l1::before { background: var(--taken); } .legend .l2::before { background: var(--down); } .legend .l3::before { background: var(--missed); }
+  .phone-wrap { display: none; justify-content: center; gap: 36px; flex-wrap: wrap; align-items: flex-start; }
+  .phone-wrap.show { display: flex; }
+  .phone { width: 300px; background: #0d1015; border: 2px solid #3a4658; border-radius: 34px; padding: 18px 14px 22px; box-shadow: 0 12px 30px rgba(0,0,0,.4); }
+  .phone .notch { width: 90px; height: 6px; background: #2a3342; border-radius: 4px; margin: 0 auto 14px; }
+  .phone .app { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 12px; letter-spacing: .5px; }
+  .ping { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-height: 330px; display: flex; flex-direction: column; }
+  .ping .tag { font-size: 11px; letter-spacing: .8px; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .ping h4 { margin: 6px 0 4px; font-size: 19px; }
+  .ping p { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
+  .timer { margin: 8px 0 14px; }
+  .timer .secs { font-size: 38px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .timer .secs small { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .timer .track { height: 8px; border-radius: 4px; background: var(--panel2); overflow: hidden; }
+  .timer .track i { display: block; height: 100%; background: var(--accent); transition: width 1s linear; }
+  .timer.low .track i { background: var(--missed); } .timer.low .secs { color: var(--missed); }
+  .acts { display: flex; gap: 10px; margin-top: auto; }
+  .acts button { flex: 1; padding: 13px 8px; border-radius: 12px; border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+  .acts .yes { background: var(--taken); color: #06210f; } .acts .no { background: var(--panel2); color: var(--text); border: 1px solid var(--line); }
+  .result { margin: auto 0; text-align: center; }
+  .result h4 { font-size: 18px; margin: 0 0 8px; }
+  .result p { color: var(--muted); font-size: 14px; }
+  .result .note-missed { text-align: left; background: #2d2610; border: 1px solid #5a4817; border-radius: 10px; padding: 11px 12px; font-size: 13.5px; color: var(--text); margin-top: 8px; }
+  .phone-side { max-width: 380px; }
+  .phone-side .btn { margin: 4px 6px 4px 0; }
+  .phone-side h3 { margin: 0 0 8px; font-size: 16px; }
+  .phone-side p { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
+  .callout-box { margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); font-size: 13.5px; }
+  .callout-box b { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="proto-banner"><b>Prototype.</b> Click through it: switch handler, switch between "Today (4.2)" and "With the fix", open "Why?" and use "Show a week later". All numbers are sample data shaped on the ping history. This is not live Dispatch.</div>
+
+<header>
+  <div class="brand">ROOK <span>Dispatch</span></div>
+  <nav><span>Callouts</span><span class="on">Coverage</span><span>Responders</span><span>Audit log</span></nav>
+  <div class="spacer"></div>
+  <div class="who">Signed in as
+    <select id="handler">
+      <option value="dot">Aunt Dot (handler for Vesper)</option>
+      <option value="kip">Kip (handler for Meteor Mite and The Gale)</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <h1 id="title">Coverage</h1>
+    <div class="seg" id="view">
+      <button data-view="console" class="on">Handler console</button>
+      <button data-view="phone">Responder phone</button>
+    </div>
+    <div class="seg" id="mode">
+      <button data-mode="today">Today (4.2)</button>
+      <button data-mode="fix" class="on">With the fix</button>
+    </div>
+  </div>
+  <p class="note" id="modeNote"></p>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="phone-wrap" id="phoneWrap">
+    <div class="phone"><div class="notch"></div><div class="app">ROOK DISPATCH · RESPONDER</div><div class="ping" id="ping"></div></div>
+    <div class="phone-side">
+      <h3>Vesper's phone: a callout comes in</h3>
+      <p id="phoneNote"></p>
+      <button class="btn" id="skip">Skip ahead 50 seconds</button>
+      <button class="btn" id="restart">Send another ping</button>
+      <p style="margin-top:14px">Try it: take the ping, turn it down, or skip ahead and let it run out. Use the "Today (4.2)" / "With the fix" switch above to compare.</p>
+    </div>
+  </div>
+
+  <div class="legend" id="legend"><span class="l1">Taken</span><span class="l2">Turned down</span><span class="l3">Missed (no answer in time)</span></div>
+
+  <div class="callout-box" id="whereBox"></div>
+</main>
+
+<script>
+  // Sample data: last 7 days and the 7 days before, per responder.
+  // "later" steps are an illustration of recovery after the fix, not a forecast.
+  const RESPONDERS = {
+    "Vesper": {
+      area: "Old Town", status: "Available",
+      weeks: [
+        { sent: 3, taken: 0, down: 0, missed: 3 },   // last 7 days
+        { sent: 6, taken: 1, down: 1, missed: 4 }    // the week before
+      ],
+      later: [
+        { sent: 5, taken: 2, down: 1, missed: 2 },
+        { sent: 9, taken: 6, down: 3, missed: 0 }
+      ]
+    },
+    "Meteor Mite": {
+      area: "Eastgate", status: "Available",
+      weeks: [
+        { sent: 2, taken: 0, down: 0, missed: 2 },
+        { sent: 3, taken: 0, down: 1, missed: 2 }
+      ],
+      later: [
+        { sent: 4, taken: 1, down: 1, missed: 2 },
+        { sent: 7, taken: 4, down: 1, missed: 2 }
+      ]
+    },
+    "The Gale": {
+      area: "Eastgate", status: "Available",
+      weeks: [
+        { sent: 24, taken: 15, down: 5, missed: 4 },
+        { sent: 22, taken: 14, down: 4, missed: 4 }
+      ],
+      later: [
+        { sent: 21, taken: 13, down: 4, missed: 4 },
+        { sent: 19, taken: 12, down: 3, missed: 4 }
+      ]
+    }
+  };
+  const HANDLERS = { dot: ["Vesper"], kip: ["Meteor Mite", "The Gale"] };
+
+  let mode = "fix";
+  const stepOf = {};      // how many "weeks later" each responder is showing (0, 1 or 2)
+  const whyOpen = {};
+
+  const $ = id => document.getElementById(id);
+
+  function isQuiet(r, step) {
+    const [cur, prev] = weeksFor(r, step);
+    if (!prev) return false;
+    return cur.sent <= prev.sent * 0.75 && cur.missed / cur.sent >= 0.5;
+  }
+
+  function weeksFor(r, step) {
+    if (step === -1) return [r.weeks[1], null];   // the actual previous week
+    if (step === 0) return r.weeks;
+    return [r.later[step - 1], step === 1 ? r.weeks[0] : r.later[0]];
+  }
+
+  function bar(cls, label, n, max) {
+    const pct = max ? Math.round((n / max) * 100) : 0;
+    return `<div class="row ${cls}"><span>${label}</span><div class="bar"><i style="width:${pct}%"></i></div><span class="num">${n}</span></div>`;
+  }
+
+  function card(name) {
+    const r = RESPONDERS[name];
+    const step = stepOf[name] || 0;
+    const [cur, prev] = weeksFor(r, step);
+    const quiet = mode === "fix" && isQuiet(r, step);
+    const max = Math.max(cur.sent, 1);
+    const takenPct = cur.sent ? Math.round(cur.taken / cur.sent * 100) : 0;
+    const missedPct = cur.sent ? Math.round(cur.missed / cur.sent * 100) : 0;
+    let html = `<div class="card ${quiet ? "quiet" : ""}">
+      <div class="card-head">
+        <div><div class="name">${name}</div><div class="sub">${r.area} · ${r.status}</div></div>
+        ${quiet ? '<span class="pill flag">Quieter than usual</span>' : '<span class="pill ok">Available</span>'}
+      </div>`;
+
+    if (mode === "today") {
+      html += `<div class="stats">
+          <div class="stat"><b>${r.status}</b><span>Availability</span></div>
+          <div class="stat"><b>${r.area}</b><span>Area</span></div>
+          <div class="stat"><b>Yes</b><span>On the routing list</span></div>
+        </div>
+        <div class="empty">Nothing on this card says how many pings ${name} has been sent or answered. If the phone goes quiet, there is nothing here to explain it.</div>`;
+      return html + "</div>";
+    }
+
+    const past = step === -1;
+    const period = past ? "previous 7 days" : "last 7 days";
+    html += `<div class="stats">
+        <div class="stat"><b>${cur.sent}</b><span>Pings sent, ${period}</span></div>
+        <div class="stat ${takenPct === 0 ? "stat-missed" : ""}"><b>${takenPct}%</b><span>Accepted, ${period}</span></div>
+        <div class="stat ${missedPct > 0 ? "stat-missed" : "stat-clear"}"><b>${missedPct}%</b><span>Missed, ${period}</span></div>
+      </div>
+      ${past ? "" : `<div class="rank">
+        <span class="rank-title">Place in Responder Ping Order</span>
+        ${(() => { const i = name === "The Gale" ? 2 : step; return `<span class="rank-step now ${i === 2 ? "normal" : ""}">${["Lower than usual", "Recovering", "Normal"][i]}</span>`; })()}
+      </div>`}
+      <div class="breakdown">
+        <h3>How ${name}'s pings went, ${period}</h3>
+        ${bar("taken", "Taken", cur.taken, max)}
+        ${bar("down", "Turned down", cur.down, max)}
+        ${bar("missed", "Missed", cur.missed, max)}
+        ${prev ? `<div class="compare">Week before: ${prev.taken} taken, ${prev.down} turned down, ${prev.missed} missed.</div>` : ""}
+      </div>`;
+
+    if (quiet) {
+      html += `<div class="banner"><b>Quieter than usual.</b> ${name} was pinged less this week, and most pings went unanswered in time.
+        Missed pings no longer count as heavily against ${name}, and the order recovers over time. <button class="link" data-why="${name}">${whyOpen[name] ? "Hide" : "Why?"}</button></div>
+        <div class="why ${whyOpen[name] ? "open" : ""}">
+          <b>What this means</b>
+          <ul>
+            <li>A <b>Missed</b> ping (no answer within 60 seconds) lowers ${name}'s place in the order less than a <b>Turned down</b> one.</li>
+            <li>With every quiet day, ${name}'s place in the order moves back toward the middle. It does not need pings to do that.</li>
+            <li>${name} is still on the list for every callout in range. Only the order changes.</li>
+          </ul>
+        </div>`;
+    } else if (step === 1) {
+      html += `<div class="banner" style="background:#10281d;border-color:#1f5a3f;"><b style="color:var(--taken)">Recovering.</b> ${name}'s place in the order is moving back up and more pings are coming in.</div>`;
+    } else if (step === 2) {
+      html += `<div class="banner" style="background:#10281d;border-color:#1f5a3f;"><b style="color:var(--taken)">Back to normal.</b> ${name}'s place in the order has recovered.</div>`;
+    }
+
+    const maxStep = name === "The Gale" ? 0 : 2;
+    const where = step === -1 ? "Actual: the previous week"
+      : step === 0 ? (maxStep ? "This week (actual). Later weeks are an illustration, not a forecast" : "This week (actual)")
+      : "Illustration: " + step + " week" + (step > 1 ? "s" : "") + " after the fix";
+    html += `<div class="foot">
+        <button class="btn" data-nav="-1" data-n="${name}" ${step <= -1 ? "disabled" : ""}>◀ Previous week</button>
+        ${maxStep ? `<button class="btn" data-nav="1" data-n="${name}" ${step >= maxStep ? "disabled" : ""}>Show a week later ▶</button>` : ""}
+        <span class="sub">${where}</span>
+      </div>`;
+    return html + "</div>";
+  }
+
+  let view = "console";
+
+  // ---- Responder phone: one ping, 60 seconds ----
+  const PING_SECONDS = 60;
+  let left = PING_SECONDS, outcome = null, ticker = null;
+
+  function startPing() {
+    clearInterval(ticker);
+    left = PING_SECONDS; outcome = null;
+    ticker = setInterval(() => {
+      if (outcome) return;
+      left -= 1;
+      if (left <= 0) { left = 0; outcome = "missed"; clearInterval(ticker); }
+      renderPhone();
+    }, 1000);
+    renderPhone();
+  }
+
+  function renderPhone() {
+    const el = $("ping");
+    if (outcome === "taken") {
+      el.innerHTML = `<div class="result"><h4>You've taken it</h4><p>Old Town callout is yours. The handler has been told.</p></div>`;
+    } else if (outcome === "down") {
+      el.innerHTML = `<div class="result"><h4>Turned down</h4><p>The callout has moved to the next responder.</p></div>`;
+    } else if (outcome === "missed") {
+      el.innerHTML = mode === "fix"
+        ? `<div class="result"><h4>You missed this one</h4><p>No answer in 60 seconds, so it moved to the next responder.</p>
+             <div class="note-missed"><b>Does this count against me?</b><br>A little. A missed callout counts for less than turning one down but does still affect your priority in receiving future callouts. Your priority order does recover over time.</div></div>`
+        : `<div class="result"><h4>Callout unavailable</h4><p>This callout has gone to another responder.</p></div>`;
+    } else {
+      const low = left <= 15;
+      const pct = Math.round(left / PING_SECONDS * 100);
+      el.innerHTML = `<div class="tag">New callout</div><h4>Old Town · structural-entry</h4><p>6 min away. Are you taking it?</p>
+        ${mode === "fix"
+          ? `<div class="timer ${low ? "low" : ""}"><div class="secs">${left}<small> seconds left</small></div><div class="track"><i style="width:${pct}%"></i></div></div>`
+          : `<div class="timer"><div class="secs" style="font-size:16px;color:var(--muted)">No timer shown</div></div>`}
+        <div class="acts"><button class="no" data-ans="down">Turn down</button><button class="yes" data-ans="taken">Take it</button></div>`;
+    }
+    $("phoneNote").textContent = mode === "fix"
+      ? "With the fix: the ping shows a countdown, and if it runs out the responder is told what happened and whether it counts against them."
+      : "Today (4.2): the ping has no timer, and a missed ping just disappears. As handlers describe it, it's 'gone to somebody else'.";
+  }
+
+  function render() {
+    const names = HANDLERS[$("handler").value];
+    $("cards").innerHTML = names.map(card).join("");
+    document.querySelectorAll("#mode button").forEach(b => b.classList.toggle("on", b.dataset.mode === mode));
+    document.querySelectorAll("#view button").forEach(b => b.classList.toggle("on", b.dataset.view === view));
+    const phone = view === "phone";
+    $("cards").style.display = phone ? "none" : "";
+    $("legend").style.display = phone ? "none" : "";
+    $("handler").parentElement.style.display = phone ? "none" : "";
+    $("phoneWrap").classList.toggle("show", phone);
+    $("title").textContent = phone ? "Responder phone" : "Coverage";
+    $("modeNote").textContent = phone
+      ? ""
+      : mode === "fix"
+        ? "With the fix: each card shows how that responder's pings went, so a handler can see whether the problem is missed pings or turned-down ones."
+        : "Today (4.2): the card tells the handler nothing about how pings are going.";
+    $("whereBox").innerHTML = phone
+      ? "<b>Where this happens:</b> the responder's phone app, on the incoming ping. The ping wait stays at 60 seconds. What's new is the countdown and the note after a missed ping."
+      : "<b>Where this happens:</b> the Coverage page of the handler web console, one card per responder the handler looks after. The new part is the 7-day breakdown, the \"Quieter than usual\" flag and the explanation. Switch to \"Today (4.2)\" to see what handlers get now.";
+    renderPhone();
+  }
+
+  $("handler").addEventListener("change", render);
+  $("view").addEventListener("click", e => {
+    if (e.target.dataset.view) { view = e.target.dataset.view; if (view === "phone") startPing(); render(); }
+  });
+  $("ping").addEventListener("click", e => { if (e.target.dataset.ans && !outcome) { outcome = e.target.dataset.ans; renderPhone(); } });
+  $("skip").addEventListener("click", () => { if (!outcome) { left = Math.max(left - 50, 1); renderPhone(); } });
+  $("restart").addEventListener("click", startPing);
+
+  $("mode").addEventListener("click", e => { if (e.target.dataset.mode) { mode = e.target.dataset.mode; render(); } });
+  $("cards").addEventListener("click", e => {
+    const t = e.target;
+    if (t.dataset.why) { whyOpen[t.dataset.why] = !whyOpen[t.dataset.why]; render(); }
+    if (t.dataset.nav && !t.disabled) {
+      const n = t.dataset.n, max = n === "The Gale" ? 0 : 2;
+      stepOf[n] = Math.max(-1, Math.min(max, (stepOf[n] || 0) + Number(t.dataset.nav)));
+      render();
+    }
+  });
+  render();
+</script>
+</body>
+</html>
